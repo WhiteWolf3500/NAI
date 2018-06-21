@@ -10,7 +10,7 @@ using namespace std;
 #include <math.h>
 #include <string.h>
 
-int thresh = 90;
+int thresh = 100;
 const char* wndname = "Shapes";
 
 
@@ -24,7 +24,6 @@ static void findShapes( const Mat& image, vector<Vec3f> circles, vector<vector<P
     Mat srcgray, gray;
     cvtColor(image,srcgray,CV_BGR2GRAY);
     GaussianBlur(srcgray,srcgray,Size(9, 9), 2, 2 );
-    HoughCircles( srcgray, circles, CV_HOUGH_GRADIENT, 1, srcgray.rows/8, 200, 50, 0, 0);
 
         Canny(srcgray, gray, 0, thresh, 5, true);
         dilate(gray, gray, Mat(), Point(-1,-1));     
@@ -57,9 +56,11 @@ static void findShapes( const Mat& image, vector<Vec3f> circles, vector<vector<P
                 }
             }
 
+    // Canny(srcgray, gray, 0, thresh, 5, true);
+    HoughCircles( srcgray, circles, CV_HOUGH_GRADIENT, 1, srcgray.rows/8, 200, 50, 0, 0);
 }
 
-static void drawShapes( Mat& image, vector<vector<Point> >& shapes, string name)
+static void drawShapes( Mat& image, vector<vector<Point> >& shapes, string name, int r, int g, int b)
 {
 
     for( size_t i = 1; i < shapes.size(); i += 2 )
@@ -68,18 +69,18 @@ static void drawShapes( Mat& image, vector<vector<Point> >& shapes, string name)
         int n = (int)shapes[i].size();
         polylines(image, &p, &n, 1, true, Scalar(255,255,0), 3, LINE_AA);
 
-        putText( image, name, cvPoint(20,20), FONT_HERSHEY_PLAIN, 1, Scalar(0,0,0), 1, 1, false);
+        putText( image, name, p[1], FONT_HERSHEY_PLAIN, 1, Scalar(0,0,0), 1, 1, false);
     }
     imshow(wndname, image);
 }
 
-static void drawCircles( const Mat& image, vector<Vec3f> &circles)
+static void drawCircles( const Mat& image, vector<Vec3f> &circles, int r, int g, int b)
 {
     for( size_t i = 0; i < circles.size(); i++ )
     {
         Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
         int radius = cvRound(circles[i][2]);
-        circle( image, center, radius, Scalar(255,255,0), 3, 8, 0 );
+        circle( image, center, radius, Scalar(r,g,b), 3, 8, 0 );
         putText( image, "circle", center, FONT_HERSHEY_PLAIN, 1, Scalar(0,0,0), 1, 1, false);
    }
     imshow(wndname, image);
@@ -113,10 +114,10 @@ int main(int argc, char** argv)
         }
 
         findShapes(image, circles, triangles, tetrahedrons, pentagons);
-        drawShapes(image, triangles, "triangles");
-        drawShapes(image, tetrahedrons, "tetrahedrons");
-        drawShapes(image, pentagons, "pentagons");
-        drawCircles(image, circles);
+        drawCircles(image, circles, 0, 0, 0);
+        drawShapes(image, triangles, "triangles", 255, 255, 0);
+        drawShapes(image, tetrahedrons, "tetrahedrons", 0, 255, 255);
+        drawShapes(image, pentagons, "pentagons", 255, 0, 255);
 
 
         // Mat srcgray, gray;
