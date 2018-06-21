@@ -10,13 +10,14 @@ using namespace std;
 #include <math.h>
 #include <string.h>
 
-int thresh = 120;
+int thresh = 150;
 const char* wndname = "Shapes";
 
 
-static void findShapes( const Mat& image,vector<vector<Point> >& tetrahedrons)
+static void findShapes( const Mat& image, vector<Vec3f> circles, vector<vector<Point> >& tetrahedrons)
 {
     tetrahedrons.clear();
+    circles.clear();
 
     vector<vector<Point> > contours;
 
@@ -41,6 +42,8 @@ static void findShapes( const Mat& image,vector<vector<Point> >& tetrahedrons)
                     tetrahedrons.push_back(approx);
                 }
             }
+
+    HoughCircles( srcgray, circles, CV_HOUGH_GRADIENT, 1, srcgray.rows/8, 200, 50, 0, 0);
 }
 
 static void drawShapes( Mat& image, vector<vector<Point> >& shapes, string name)
@@ -69,6 +72,7 @@ int main(int argc, char** argv)
     namedWindow( wndname, 1 );
 
     vector<vector<Point> > tetrahedrons;
+    vector<Vec3f> circles;
 
     for( int i = 0; names[i] != 0; i++ )
     {
@@ -79,7 +83,7 @@ int main(int argc, char** argv)
             continue;
         }
 
-        findShapes(image,tetrahedrons);
+        findShapes(image, circles, tetrahedrons);
         drawShapes(image, tetrahedrons, "tetrahedrons");
 
         char c = (char)waitKey();
