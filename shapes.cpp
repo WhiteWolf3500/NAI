@@ -10,7 +10,7 @@ using namespace std;
 #include <math.h>
 #include <string.h>
 
-int thresh = 150;
+int thresh = 90;
 const char* wndname = "Shapes";
 
 
@@ -23,6 +23,8 @@ static void findShapes( const Mat& image, vector<Vec3f> circles, vector<vector<P
 
     Mat srcgray, gray;
     cvtColor(image,srcgray,CV_BGR2GRAY);
+    GaussianBlur(srcgray,srcgray,Size(9, 9), 2, 2 );
+    HoughCircles( srcgray, circles, CV_HOUGH_GRADIENT, 1, srcgray.rows/8, 200, 50, 0, 0);
 
         Canny(srcgray, gray, 0, thresh, 5, true);
         dilate(gray, gray, Mat(), Point(-1,-1));     
@@ -43,7 +45,6 @@ static void findShapes( const Mat& image, vector<Vec3f> circles, vector<vector<P
                 }
             }
 
-    HoughCircles( srcgray, circles, CV_HOUGH_GRADIENT, 1, srcgray.rows/8, 200, 50, 0, 0);
 }
 
 static void drawShapes( Mat& image, vector<vector<Point> >& shapes, string name)
@@ -55,7 +56,7 @@ static void drawShapes( Mat& image, vector<vector<Point> >& shapes, string name)
         int n = (int)shapes[i].size();
         polylines(image, &p, &n, 1, true, Scalar(255,255,0), 3, LINE_AA);
 
-        putText( image, name, cvPoint(0,0), FONT_HERSHEY_PLAIN, 1, Scalar(0,0,0), 1, 1, false);
+        putText( image, name, cvPoint(20,20), FONT_HERSHEY_PLAIN, 1, Scalar(0,0,0), 1, 1, false);
     }
     imshow(wndname, image);
 }
@@ -69,6 +70,7 @@ static void drawCircles( const Mat& image, vector<Vec3f> &circles)
         circle( image, center, radius, Scalar(255,255,0), 3, 8, 0 );
         putText( image, "circle", center, FONT_HERSHEY_PLAIN, 1, Scalar(0,0,0), 1, 1, false);
    }
+    imshow(wndname, image);
 }
 
 int main(int argc, char** argv)
@@ -100,15 +102,18 @@ int main(int argc, char** argv)
         drawShapes(image, tetrahedrons, "tetrahedrons");
         drawCircles(image, circles);
 
+
+        // Mat srcgray, gray;
+        // cvtColor(image,srcgray,CV_BGR2GRAY);
+        // Canny(srcgray, gray, 0, thresh, 5, true);
+        // imshow(wndname, gray);
+
+
         char c = (char)waitKey();
         if( c == 27 )
             break;
     }
 
-    // Mat srcgray, gray;
-    // cvtColor(image,srcgray,CV_BGR2GRAY);
-    // Canny(srcgray, gray, 0, thresh, 5, true);
-    // imshow(wndname, gray);
 
     return 0;
 }
