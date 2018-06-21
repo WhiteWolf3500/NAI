@@ -22,7 +22,7 @@ static double angle( Point pt1, Point pt2, Point pt0 )
     return (dx1*dx2 + dy1*dy2)/sqrt((dx1*dx1 + dy1*dy1)*(dx2*dx2 + dy2*dy2) + 1e-10);
 }
 
-static void findShapes( const Mat& image, vector<Vec3f> circles, vector<vector<Point> >& triangles, vector<vector<Point> >& tetrahedrons, vector<vector<Point> >& pentagons, vector<vector<Point> >&  rectangles )
+static void findShapes( const Mat& image, vector<Vec3f> &circles, vector<vector<Point> >& triangles, vector<vector<Point> >& rettriangles, vector<vector<Point> >& tetrahedrons, vector<vector<Point> >& pentagons, vector<vector<Point> >&  rectangles )
 {
     tetrahedrons.clear();
     circles.clear();
@@ -48,7 +48,21 @@ static void findShapes( const Mat& image, vector<Vec3f> circles, vector<vector<P
                     fabs(contourArea(Mat(approx))) > 1000 &&
                     isContourConvex(Mat(approx)) )
                 {
-                    triangles.push_back(approx);
+                    int flag = 0;
+                    for( int j = 2; j < 5; j++ )
+                    {
+                        double p12 = sqrt( pow((approx[j%4].x - approx[j-2].x),2) + pow((approx[j%4].y - approx[j-2].y),2) ),
+                               p13 = sqrt( pow((approx[j%4].x - approx[j-1].x),2) + pow((approx[j%4].y - approx[j-1].y),2) ),
+                               p23 = sqrt( pow((approx[j-1].x - approx[j-2].x),2) + pow((approx[j-1].y - approx[j-2].y),2) ),
+                               ang = acos( (pow(p12,2) + pow(p13,2) - pow(p23,2)) / (2 * p12 * p13) ) * 180 / 3.14;
+                        
+                        if(ang > 85 && ang < 95)
+                            flag = 1;
+                    }
+                    if(flag == 1)
+                        rettriangles.push_back(approx);
+                    else
+                        triangles.push_back(approx);
                 }
                 else if( approx.size() == 4 &&
                     fabs(contourArea(Mat(approx))) > 1000 &&
@@ -105,7 +119,7 @@ static void drawCircles( const Mat& image, vector<Vec3f> &circles, int r, int g,
     imshow(wndname, image);
 }
 
-static void counting( const Mat& image, vector<Vec3f> &circles, vector<vector<Point> >& triangles, vector<vector<Point> >& tetrahedrons, vector<vector<Point> >& pentagons,vector<vector<Point> >& rectangles )
+static void counting( const Mat& image, vector<Vec3f> &circles, vector<vector<Point> >& triangles, vector<vector<Point> >& rettriangles, vector<vector<Point> >& tetrahedrons, vector<vector<Point> >& pentagons,vector<vector<Point> >& rectangles )
 {
     int x = 10, y = 20;
 
@@ -123,6 +137,13 @@ static void counting( const Mat& image, vector<Vec3f> &circles, vector<vector<Po
         y +=15;
     }
     
+    if(rettriangles.size() > 1)
+    {
+        String label = "Rectangular triangles: " + to_string(rettriangles.size()/2);
+        putText( image, label, cvPoint(x,y), FONT_HERSHEY_PLAIN, 1, Scalar(0,0,0), 1, 1, false);
+        y +=15;
+    }
+
     if(pentagons.size() > 1)
     {
         String label = "Pentagons: " + to_string(pentagons.size()/2);
@@ -161,6 +182,7 @@ int main(int argc, char** argv)
     namedWindow( wndname, 1 );
 
     vector<vector<Point> > triangles;
+    vector<vector<Point> > rettriangles;
     vector<vector<Point> > tetrahedrons;
     vector<vector<Point> > rectangles;
     vector<vector<Point> > pentagons;
@@ -175,13 +197,14 @@ int main(int argc, char** argv)
             continue;
         }
 
-        findShapes(image, circles, triangles, tetrahedrons, pentagons, rectangles);
+        findShapes(image, circles, triangles, rettriangles, tetrahedrons, pentagons, rectangles);
         drawCircles(image, circles, 0, 0, 0);
-        drawShapes(image, triangles, "triangles", 255, 255, 0);
+        drawShapes(image, triangles, "triangle", 255, 255, 0);
+        drawShapes(image, rettriangles, "ret_triangle", 255, 255, 0);
         drawShapes(image, tetrahedrons, "tetrahedrons", 0, 255, 255);
         drawShapes(image, rectangles, "rectangles", 0, 255, 255);
-        drawShapes(image, pentagons, "pentagons", 255, 0, 255);
-        counting(image, circles, triangles, tetrahedrons, pentagons, rectangles);
+        drawShapes(image, pentagons, "pentagon", 255, 0, 255);
+        counting(image, circles, triangles, rettriangles, tetrahedrons, pentagons, rectangles);
 
 
 
