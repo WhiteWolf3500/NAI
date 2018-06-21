@@ -13,8 +13,16 @@ using namespace std;
 int thresh = 100;
 const char* wndname = "Shapes";
 
+static double angle( Point pt1, Point pt2, Point pt0 )
+{
+    double dx1 = pt1.x - pt0.x;
+    double dy1 = pt1.y - pt0.y;
+    double dx2 = pt2.x - pt0.x;
+    double dy2 = pt2.y - pt0.y;
+    return (dx1*dx2 + dy1*dy2)/sqrt((dx1*dx1 + dy1*dy1)*(dx2*dx2 + dy2*dy2) + 1e-10);
+}
 
-static void findShapes( const Mat& image, vector<Vec3f> circles, vector<vector<Point> >& triangles, vector<vector<Point> >& tetrahedrons, vector<vector<Point> >& pentagons)
+static void findShapes( const Mat& image, vector<Vec3f> circles, vector<vector<Point> >& triangles, vector<vector<Point> >& tetrahedrons, vector<vector<Point> >& pentagons, vector<vector<Point> >&  rectangles )
 {
     tetrahedrons.clear();
     circles.clear();
@@ -46,7 +54,18 @@ static void findShapes( const Mat& image, vector<Vec3f> circles, vector<vector<P
                     fabs(contourArea(Mat(approx))) > 1000 &&
                     isContourConvex(Mat(approx)) )
                 {
-                    tetrahedrons.push_back(approx);
+                    double maxCosine = 0;
+
+                    for( int j = 2; j < 5; j++ )
+                    {
+                        double cosine = fabs(angle(approx[j%4], approx[j-2], approx[j-1]));
+                        maxCosine = MAX(maxCosine, cosine);
+                    }
+
+                    if( maxCosine < 0.1 )
+                        rectangles.push_back(approx);
+                    else
+                        tetrahedrons.push_back(approx);
                 }
                 else if( approx.size() == 5 &&
                     fabs(contourArea(Mat(approx))) > 1000 &&
@@ -67,7 +86,7 @@ static void drawShapes( Mat& image, vector<vector<Point> >& shapes, string name,
     {
         Point* p = &shapes[i][0];
         int n = (int)shapes[i].size();
-        polylines(image, &p, &n, 1, true, Scalar(255,255,0), 3, LINE_AA);
+        polylines(image, &p, &n, 1, true, Scalar(r,g,b), 3, LINE_AA);
 
         putText( image, name, p[1], FONT_HERSHEY_PLAIN, 1, Scalar(0,0,0), 1, 1, false);
     }
@@ -101,6 +120,7 @@ int main(int argc, char** argv)
 
     vector<vector<Point> > triangles;
     vector<vector<Point> > tetrahedrons;
+    vector<vector<Point> > rectangles;
     vector<vector<Point> > pentagons;
     vector<Vec3f> circles;
 
@@ -113,10 +133,11 @@ int main(int argc, char** argv)
             continue;
         }
 
-        findShapes(image, circles, triangles, tetrahedrons, pentagons);
+        findShapes(image, circles, triangles, tetrahedrons, pentagons, rectangles);
         drawCircles(image, circles, 0, 0, 0);
         drawShapes(image, triangles, "triangles", 255, 255, 0);
         drawShapes(image, tetrahedrons, "tetrahedrons", 0, 255, 255);
+        drawShapes(image, rectangles, "rectangles", 0, 255, 255);
         drawShapes(image, pentagons, "pentagons", 255, 0, 255);
 
 
