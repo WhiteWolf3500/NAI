@@ -14,7 +14,7 @@ int thresh = 90;
 const char* wndname = "Shapes";
 
 
-static void findShapes( const Mat& image, vector<Vec3f> circles, vector<vector<Point> >& tetrahedrons)
+static void findShapes( const Mat& image, vector<Vec3f> circles, vector<vector<Point> >& triangles, vector<vector<Point> >& tetrahedrons, vector<vector<Point> >& pentagons)
 {
     tetrahedrons.clear();
     circles.clear();
@@ -37,11 +37,23 @@ static void findShapes( const Mat& image, vector<Vec3f> circles, vector<vector<P
             {
                 approxPolyDP(Mat(contours[i]), approx, arcLength(Mat(contours[i]), true)*0.02, true);
             
-                if( approx.size() == 4 &&
+                if( approx.size() == 3 &&
+                    fabs(contourArea(Mat(approx))) > 1000 &&
+                    isContourConvex(Mat(approx)) )
+                {
+                    triangles.push_back(approx);
+                }
+                else if( approx.size() == 4 &&
                     fabs(contourArea(Mat(approx))) > 1000 &&
                     isContourConvex(Mat(approx)) )
                 {
                     tetrahedrons.push_back(approx);
+                }
+                else if( approx.size() == 5 &&
+                    fabs(contourArea(Mat(approx))) > 1000 &&
+                    isContourConvex(Mat(approx)) )
+                {
+                    pentagons.push_back(approx);
                 }
             }
 
@@ -86,7 +98,9 @@ int main(int argc, char** argv)
 
     namedWindow( wndname, 1 );
 
+    vector<vector<Point> > triangles;
     vector<vector<Point> > tetrahedrons;
+    vector<vector<Point> > pentagons;
     vector<Vec3f> circles;
 
     for( int i = 0; names[i] != 0; i++ )
@@ -98,8 +112,10 @@ int main(int argc, char** argv)
             continue;
         }
 
-        findShapes(image, circles, tetrahedrons);
+        findShapes(image, circles, triangles, tetrahedrons, pentagons);
+        drawShapes(image, triangles, "triangles");
         drawShapes(image, tetrahedrons, "tetrahedrons");
+        drawShapes(image, pentagons, "pentagons");
         drawCircles(image, circles);
 
 
