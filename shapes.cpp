@@ -105,6 +105,48 @@ static void drawCircles( const Mat& image, vector<Vec3f> &circles, int r, int g,
     imshow(wndname, image);
 }
 
+static void counting( const Mat& image, vector<Vec3f> &circles, vector<vector<Point> >& triangles, vector<vector<Point> >& tetrahedrons, vector<vector<Point> >& pentagons,vector<vector<Point> >& rectangles )
+{
+    int x = 10, y = 20;
+
+    if(circles.size() > 0)
+    {
+        String label = "Circles: " + to_string(circles.size());
+        putText( image, label, cvPoint(x,y), FONT_HERSHEY_PLAIN, 1, Scalar(0,0,0), 1, 1, false);
+        y +=15;
+    }
+    
+    if(triangles.size() > 0)
+    {
+        String label = "Triangles: " + to_string(triangles.size()/2);
+        putText( image, label, cvPoint(x,y), FONT_HERSHEY_PLAIN, 1, Scalar(0,0,0), 1, 1, false);
+        y +=15;
+    }
+    
+    if(pentagons.size() > 1)
+    {
+        String label = "Pentagons: " + to_string(pentagons.size()/2);
+        putText( image, label, cvPoint(x,y), FONT_HERSHEY_PLAIN, 1, Scalar(0,0,0), 1, 1, false);
+        y +=15;
+    }
+
+    if(tetrahedrons.size() > 1 )
+    {
+        String label = "Tetrahedrons: " + to_string(tetrahedrons.size()/2);
+        putText( image, label, cvPoint(x,y), FONT_HERSHEY_PLAIN, 1, Scalar(0,0,0), 1, 1, false);
+        y +=15;
+    }
+
+    if(rectangles.size() > 1 )
+    {
+        String label = "Rectangles: " + to_string(rectangles.size()/2);
+        putText( image, label, cvPoint(x,y), FONT_HERSHEY_PLAIN, 1, Scalar(0,0,0), 1, 1, false);
+        y +=15;
+    }
+
+    imshow(wndname, image);
+}
+
 int main(int argc, char** argv)
 {
 
@@ -139,6 +181,8 @@ int main(int argc, char** argv)
         drawShapes(image, tetrahedrons, "tetrahedrons", 0, 255, 255);
         drawShapes(image, rectangles, "rectangles", 0, 255, 255);
         drawShapes(image, pentagons, "pentagons", 255, 0, 255);
+        counting(image, circles, triangles, tetrahedrons, pentagons, rectangles);
+
 
 
         // Mat srcgray, gray;
