@@ -55,6 +55,7 @@ static void findShapes( const Mat& image, vector<Vec3f> &circles, vector<vector<
                     int flag = 0;
                     for( int j = 2; j < 5; j++ )
                     {
+                        
                         double p12 = sqrt( pow((approx[j%4].x - approx[j-2].x),2) + pow((approx[j%4].y - approx[j-2].y),2) ),
                                p13 = sqrt( pow((approx[j%4].x - approx[j-1].x),2) + pow((approx[j%4].y - approx[j-1].y),2) ),
                                p23 = sqrt( pow((approx[j-1].x - approx[j-2].x),2) + pow((approx[j-1].y - approx[j-2].y),2) ),
