@@ -10,7 +10,7 @@ using namespace std;
 #include <math.h>
 #include <string.h>
 
-int thresh = 100;
+int thresh = 120;
 const char* wndname = "Shapes";
 
 static double angle( Point pt1, Point pt2, Point pt0 )
@@ -24,8 +24,12 @@ static double angle( Point pt1, Point pt2, Point pt0 )
 
 static void findShapes( const Mat& image, vector<Vec3f> &circles, vector<vector<Point> >& triangles, vector<vector<Point> >& rettriangles, vector<vector<Point> >& tetrahedrons, vector<vector<Point> >& pentagons, vector<vector<Point> >&  rectangles )
 {
+    triangles.clear();
+    rettriangles.clear();
     tetrahedrons.clear();
+    pentagons.clear();
     circles.clear();
+    rectangles.clear();
 
     vector<vector<Point> > contours;
 
@@ -43,7 +47,7 @@ static void findShapes( const Mat& image, vector<Vec3f> &circles, vector<vector<
             for( size_t i = 0; i < contours.size(); i++ )
             {
                 approxPolyDP(Mat(contours[i]), approx, arcLength(Mat(contours[i]), true)*0.02, true);
-            
+
                 if( approx.size() == 3 &&
                     fabs(contourArea(Mat(approx))) > 1000 &&
                     isContourConvex(Mat(approx)) )
@@ -91,9 +95,11 @@ static void findShapes( const Mat& image, vector<Vec3f> &circles, vector<vector<
 
     // Canny(srcgray, gray, 0, thresh, 5, true);
     HoughCircles( srcgray, circles, CV_HOUGH_GRADIENT, 1, srcgray.rows/8, 200, 50, 0, 0);
+
+
 }
 
-static void drawShapes( Mat& image, vector<vector<Point> >& shapes, string name, int r, int g, int b)
+static void drawShapes( Mat& image, vector<vector<Point> >& shapes, string name, int r, int g, int b )
 {
 
     for( size_t i = 1; i < shapes.size(); i += 2 )
@@ -102,19 +108,19 @@ static void drawShapes( Mat& image, vector<vector<Point> >& shapes, string name,
         int n = (int)shapes[i].size();
         polylines(image, &p, &n, 1, true, Scalar(r,g,b), 3, LINE_AA);
 
-        putText( image, name, p[1], FONT_HERSHEY_PLAIN, 1, Scalar(0,0,0), 1, 1, false);
+        putText(image, name, p[1] , FONT_HERSHEY_PLAIN, 1, Scalar(0,0,0), 1, 1, false);
     }
     imshow(wndname, image);
 }
 
-static void drawCircles( const Mat& image, vector<Vec3f> &circles, int r, int g, int b)
+static void drawCircles( const Mat& image, vector<Vec3f> &circles, string name, int r, int g, int b )
 {
     for( size_t i = 0; i < circles.size(); i++ )
     {
         Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
         int radius = cvRound(circles[i][2]);
         circle( image, center, radius, Scalar(r,g,b), 3, 8, 0 );
-        putText( image, "circle", center, FONT_HERSHEY_PLAIN, 1, Scalar(0,0,0), 1, 1, false);
+        putText( image, name, center, FONT_HERSHEY_PLAIN, 1, Scalar(0,0,0), 1, 1, false);
    }
     imshow(wndname, image);
 }
@@ -136,14 +142,14 @@ static void counting( const Mat& image, vector<Vec3f> &circles, vector<vector<Po
         putText( image, label, cvPoint(x,y), FONT_HERSHEY_PLAIN, 1, Scalar(0,0,0), 1, 1, false);
         y +=15;
     }
-    
+
     if(rettriangles.size() > 1)
     {
         String label = "Rectangular triangles: " + to_string(rettriangles.size()/2);
         putText( image, label, cvPoint(x,y), FONT_HERSHEY_PLAIN, 1, Scalar(0,0,0), 1, 1, false);
         y +=15;
     }
-
+    
     if(pentagons.size() > 1)
     {
         String label = "Pentagons: " + to_string(pentagons.size()/2);
@@ -168,6 +174,8 @@ static void counting( const Mat& image, vector<Vec3f> &circles, vector<vector<Po
     imshow(wndname, image);
 }
 
+
+
 int main(int argc, char** argv)
 {
 
@@ -180,6 +188,7 @@ int main(int argc, char** argv)
     }
 
     namedWindow( wndname, 1 );
+
 
     vector<vector<Point> > triangles;
     vector<vector<Point> > rettriangles;
@@ -198,7 +207,7 @@ int main(int argc, char** argv)
         }
 
         findShapes(image, circles, triangles, rettriangles, tetrahedrons, pentagons, rectangles);
-        drawCircles(image, circles, 0, 0, 0);
+        drawCircles(image, circles, "circles", 0, 0, 0);
         drawShapes(image, triangles, "triangle", 255, 255, 0);
         drawShapes(image, rettriangles, "ret_triangle", 255, 255, 0);
         drawShapes(image, tetrahedrons, "tetrahedrons", 0, 255, 255);
@@ -207,18 +216,16 @@ int main(int argc, char** argv)
         counting(image, circles, triangles, rettriangles, tetrahedrons, pentagons, rectangles);
 
 
-
-        // Mat srcgray, gray;
-        // cvtColor(image,srcgray,CV_BGR2GRAY);
-        // Canny(srcgray, gray, 0, thresh, 5, true);
-        // imshow(wndname, gray);
+    // Mat srcgray, gray;
+    // cvtColor(image,srcgray,CV_BGR2GRAY);
+    // Canny(srcgray, gray, 0, thresh, 5, true);
+    // imshow(wndname, gray);
 
 
         char c = (char)waitKey();
         if( c == 27 )
             break;
     }
-
 
     return 0;
 }
